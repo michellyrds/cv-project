@@ -14,3 +14,8 @@ make environment
 ```terminal
 make requirements
 ```
+
+### Iniciando a aplicação
+```terminal
+make start
+```
