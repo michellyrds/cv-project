@@ -8,7 +8,7 @@ RUN pip install -r requirements.txt
 
 EXPOSE 8501
 
-COPY app ./app
+COPY . /app
 
 ENTRYPOINT ["streamlit", "run"]
 
