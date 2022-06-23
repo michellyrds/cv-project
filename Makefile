@@ -19,6 +19,15 @@ clean: ## delete python bytecode-compiled files
 start: ## start application server
 	streamlit run main.py
 
+.PHONY: start-dev
+start-dev: ## run application in dev mode
+	streamlit run main.py --logger.level=debug
+.PHONY: docker-setup
+docker-setup: ## setup project using docker container
+	docker build -t streamlitapp:latest .
+	docker run -p 8501:8501 streamlitapp:latest
+
+
 help: ## Prompts help for every command
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
     awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

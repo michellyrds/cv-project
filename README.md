@@ -5,7 +5,7 @@ SO: Ubuntu 20.04.4 LTS
 - virtualenv python: [pyenv](https://github.com/pyenv/pyenv-virtualenv) | [pyenv-installer](https://github.com/pyenv/pyenv-installer)
 - framework: [Streamlit](https://streamlit.io/)
 
-## Setup
+## Setup local
 
 ```terminal
 make environment
@@ -14,6 +14,10 @@ make environment
 ```terminal
 make requirements
 ```
+
+## Docker setup
+
+
 
 ### Iniciando a aplicação
 ```terminal
