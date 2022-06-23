@@ -16,7 +16,9 @@ make requirements
 ```
 
 ## Docker setup
-
+```terminal
+make docker-setup
+```
 
 
 ### Iniciando a aplicação
