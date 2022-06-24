@@ -10,6 +10,6 @@ EXPOSE 8501
 
 COPY . /app
 
-ENTRYPOINT ["streamlit", "run"]
+ENTRYPOINT ["streamlit", "run", "main.py"]
 
-CMD ["app.py"]
+CMD ["main.py"]
