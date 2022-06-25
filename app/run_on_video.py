@@ -1,11 +1,12 @@
-import streamlit as st
-import cv2
-import time
 import tempfile
+import time
+
+import cv2
 import mediapipe.python.solutions.drawing_utils as drawing_utils
 import mediapipe.python.solutions.face_mesh as face_mesh
+import streamlit as st
 
-from app.utils import image_resize, sidebar_html, header_html
+from app.utils import header_html, image_resize, sidebar_html
 
 mp_drawing = drawing_utils
 mp_face_mesh = face_mesh
@@ -70,7 +71,9 @@ def __run_on_video__():
 
     # Recording
     codec = cv2.VideoWriter_fourcc("m", "p", "4", "v")
-    out = cv2.VideoWriter("media/output1.mp4", codec, fps_input, (width, height))
+    out = cv2.VideoWriter(
+        output_filepath + "/output1.mp4", codec, fps_input, (width, height)
+    )
 
     st.sidebar.text("Input Video")
     st.sidebar.video(tffile.name)

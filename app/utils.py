@@ -1,6 +1,7 @@
 
 import streamlit as st
 import cv2
+from PIL import Image
 
 @st.cache()
 def image_resize(
@@ -38,3 +39,32 @@ sidebar_html = (
     """
 )
 
+header_html = "<h1 style='text-align: center; color:red;'>{}</h1>"
+
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True)
+
+
+def remote_css(url):
+    st.markdown('<style src="{}"></style>'.format(url), unsafe_allow_html=True)
+
+
+def icon_css(icone_name):
+    remote_css("https://fonts.googleapis.com/icon?family=Material+Icons")
+
+
+def icon(icon_name):
+    st.markdown(
+        '<i class="material-icons">{}</i>'.format(icon_name), unsafe_allow_html=True
+    )
+
+
+def load_css(file_name):
+    with open(file_name) as f:
+        st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True)
+
+
+def load_images(file_name):
+    img = Image.open(file_name)
+    return st.image(img, width=300)
