@@ -39,7 +39,7 @@ sidebar_html = (
     """
 )
 
-header_html = "<h1 style='text-align: center; color:red;'>{}</h1>"
+header_html = "<h1 style='text-align: center; color:rgb(255, 75, 75);'>{}</h1>"
 
 def local_css(file_name):
     with open(file_name) as f:
@@ -65,6 +65,6 @@ def load_css(file_name):
         st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True)
 
 
-def load_images(file_name):
+def load_images(file_name, width):
     img = Image.open(file_name)
-    return st.image(img, width=300)
+    return st.image(img, width=width)
