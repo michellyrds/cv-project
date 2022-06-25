@@ -22,6 +22,7 @@ start: ## start application server
 .PHONY: start-dev
 start-dev: ## run application in dev mode
 	streamlit run main.py --logger.level=debug
+	
 .PHONY: docker-setup
 docker-setup: ## setup project using docker container
 	docker build -t streamlitapp:latest .
@@ -31,3 +32,4 @@ docker-setup: ## setup project using docker container
 help: ## Prompts help for every command
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
     awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
