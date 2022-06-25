@@ -23,9 +23,13 @@ start: ## start application server
 start-dev: ## run application in dev mode
 	streamlit run main.py --logger.level=debug
 	
-.PHONY: docker-setup
-docker-setup: ## setup project using docker container
+.PHONY: docker-build
+docker-build: ## setup project using docker container
 	docker build -t streamlitapp:latest .
+	docker run -p 8501:8501 streamlitapp:latest
+
+.PHONY: docker-start
+docker-start: ## start application server on docker
 	docker run -p 8501:8501 streamlitapp:latest
 
 
