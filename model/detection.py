@@ -34,7 +34,9 @@ originalFolderPath = ""
 croppedFolderPath = ""
 personFolderPath = ""
 
-def generateCroppedImagesFromVideo(videoFilePath, personName = "John_Doe", imagesPath="./data/", samplePercent=0.25):
+def generateCroppedImagesFromVideo(videoFilePath, personName = "John_Doe", imagesPath="./data/"):
+    global originalFolderPath
+    global croppedFolderPath
     originalFolderPath = imagesPath + originalFolder;
     croppedFolderPath = imagesPath + croppedFolder;
     personFolderPath = imagesPath + originalFolder + personName;
