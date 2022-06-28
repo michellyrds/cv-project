@@ -85,6 +85,7 @@ def __run_on_image__():
     
     mongoConnect = get_database("Videos")
     col = mongoConnect.get_collection('image')
-    imgAtt = json.loads(imgAtt)    
+    imgAtt = json.loads(imgAtt)
+
     col.insert_one({'_id': imgAtt['id'], 'path': imgAtt['path']})
     

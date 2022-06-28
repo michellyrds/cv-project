@@ -162,7 +162,7 @@ def __run_on_video__():
         videoAtt = saveVideo(output_video)
         videoAtt = json.loads(videoAtt)
         mongoConnect = get_database("Videos")
-        mongoConnect.getCollection("video").insert_one({'_id': videoAtt['id'], 'path': videoAtt['path']})
+        mongoConnect.get_collection("video").insert_one({'_id': videoAtt['id'], 'path': videoAtt['path']})
         
         out_bytes = output_video.read()
         st.video(out_bytes)
