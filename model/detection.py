@@ -1,29 +1,8 @@
-from logging.config import valid_ident
-from torch import nn, optim, as_tensor
-from torch.utils.data import Dataset, DataLoader
-import torch.nn.functional as F
-from torch.optim import lr_scheduler
-from torch.nn.init import *
-from torchvision import transforms, utils, datasets, models
-from InceptionResnetV1 import inception_resnet_v1
-from PIL import Image
-from pdb import set_trace
-import time
-import copy
-from pathlib import Path
+# from InceptionResnetV1 import inception_resnet_v1
 import os
-import sys
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from skimage import io, transform
-from tqdm import trange, tqdm
-import csv
-import glob
-import dlib
 import pandas as pd
-import numpy as np
 import os
-import cv2 as cv 
+import cv2 as cv
 import subprocess
 import shutil
 
@@ -34,49 +13,74 @@ originalFolderPath = ""
 croppedFolderPath = ""
 personFolderPath = ""
 
-def generateCroppedImagesFromVideo(videoFilePath, personName = "John_Doe", imagesPath="./data/"):
+
+def generate_paths(imagesPath="./data/"):
     global originalFolderPath
     global croppedFolderPath
-    originalFolderPath = imagesPath + originalFolder;
-    croppedFolderPath = imagesPath + croppedFolder;
-    personFolderPath = imagesPath + originalFolder + personName;
+    originalFolderPath = imagesPath + originalFolder
+    croppedFolderPath = imagesPath + croppedFolder
+
+
+def generateCroppedImagesFromVideo(
+    videoFilePath, personName="John_Doe", imagesPath="./data/"
+):
+    personOriginalFolderPath = imagesPath + originalFolder + personName
+    personCroppedFolderPath = imagesPath + croppedFolder + personName
+    if not os.path.exists(personOriginalFolderPath):
+        os.mkdir(f"{personOriginalFolderPath}/")
 
     capture = cv.VideoCapture(videoFilePath)
 
-    if(capture.isOpened()):
-        success,image = capture.read()
+    if capture.isOpened():
+        success, image = capture.read()
         count = 0
         success = True
         while success:
-            cv.imwrite(f"{personFolderPath}/{personName}_{format(count, '04d') }.png", image)
-            success,image = capture.read()
+            cv.imwrite(
+                f"{personOriginalFolderPath}/{personName}_{format(count, '04d') }.png",
+                image,
+            )
+            success, image = capture.read()
             count += 1
         print("Images Generated!")
 
-        directory = os.fsencode(personFolderPath)
-            
+        directory = os.fsencode(personOriginalFolderPath)
         for file in os.listdir(directory):
             filename = os.fsdecode(file)
-            os.system(f'mogrify -rotate -90 {personFolderPath}/{filename}')
+            os.system(f"mogrify -rotate -180 {personOriginalFolderPath}/{filename}")
         print("Images Rotated!")
 
-        os.system(f'autocrop -i {personFolderPath} -o {personFolderPath}160 -w 720 -H 720 --facePercent 80')
+        rc = subprocess.call("model/mtcnnCaller.sh")
+
         print("Images Cropped!")
 
-        rc = subprocess.call("./mtcnnCaller.sh")
         print(rc)
 
-def separateSamples(samplePercent): 
+
+def separateSamples(samplePercent):
     for personFolder in os.listdir(croppedFolderPath):
-        files = [file for file in os.listdir(f'{croppedFolderPath}{personFolder}/')]
+        if os.path.isfile(f"{croppedFolderPath}{personFolder}"):
+            continue
+
+        files = [file for file in os.listdir(f"{croppedFolderPath}{personFolder}/")]
         series = pd.Series(files)
         valSeries = series.sample(frac=samplePercent)
-        trainSeries =  series.drop(valSeries.index)
-        os.mkdir(f'{croppedFolderPath}{personFolder}/val/')
-        os.mkdir(f'{croppedFolderPath}{personFolder}/train/')
-        for file in valSeries: 
-            shutil.move(f'{croppedFolderPath}{personFolder}/{file}', f'{croppedFolderPath}{personFolder}/val/{file}')
-        for file in trainSeries: 
-            shutil.move(f'{croppedFolderPath}{personFolder}/{file}', f'{croppedFolderPath}{personFolder}/train/{file}')
+        trainSeries = series.drop(valSeries.index)
+        if not os.path.exists(f"{croppedFolderPath}{personFolder}/val/"):
+            os.mkdir(f"{croppedFolderPath}{personFolder}/val/")
 
-          
+        if not os.path.exists(f"{croppedFolderPath}{personFolder}/train/"):
+            os.mkdir(f"{croppedFolderPath}{personFolder}/train/")
+
+        for file in valSeries:
+            if os.path.isfile(f"{croppedFolderPath}{personFolder}/{file}"):
+                shutil.move(
+                    f"{croppedFolderPath}{personFolder}/{file}",
+                    f"{croppedFolderPath}{personFolder}/val/{file}",
+                )
+        for file in trainSeries:
+            if os.path.isfile(f"{croppedFolderPath}{personFolder}/{file}"):
+                shutil.move(
+                    f"{croppedFolderPath}{personFolder}/{file}",
+                    f"{croppedFolderPath}{personFolder}/train/{file}",
+                )
