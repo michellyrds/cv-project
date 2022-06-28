@@ -22,7 +22,7 @@ def __run_on_video__():
     use_webcam = st.sidebar.button("Usar webcam")
     record = st.sidebar.checkbox("Gravar vídeo")
 
-    if record:
+    if record and use_webcam:
         st.checkbox("Gravando...", value=True)
 
     st.markdown(
@@ -75,6 +75,8 @@ def __run_on_video__():
         output_filepath + "/output1.mp4", codec, fps_input, (width, height)
     )
 
+    save_video = st.sidebar.checkbox("Salvar output")
+
     st.sidebar.text("Input Video")
     st.sidebar.video(tffile.name)
 
@@ -111,7 +113,7 @@ def __run_on_video__():
             ret, frame = video.read()
 
             if not ret:
-                continue
+                break
 
             results = face_mesh.process(frame)
             frame.flags.writeable = True
@@ -133,7 +135,7 @@ def __run_on_video__():
                 fps = 1 / (currTime - prevTime)
                 prevTime = currTime
 
-                if record:
+                if save_video:
                     out.write(frame)
 
                 kpi1_text.write(
@@ -153,10 +155,13 @@ def __run_on_video__():
                 frame = image_resize(image=frame, width=640)
                 stframe.image(frame, channels="BGR", use_column_width=True)
 
-        st.text("Vídeo processado")
-        output_video = open(output_filepath + "/output1.mp4", "rb")
-        out_bytes = output_video.read()
-        st.video(out_bytes)
-
         video.release()
         out.release()
+
+    if save_video:
+        st.text("Vídeo processado")
+        output_video = open(output_filepath + "/output1.mp4", "rb")
+        
+
+        out_bytes = output_video.read()
+        st.video(out_bytes)

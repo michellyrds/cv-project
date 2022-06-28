@@ -43,7 +43,4 @@ def runDetection():
     detection.generateCroppedImagesFromVideo('./media/input/Ll-2.mp4')
 
 if __name__ == "__main__":
-    #main()
-    print("Running Detection")
-    runDetection()
-    print("AAA Detection")
+    main()

@@ -48,6 +48,8 @@ def __run_on_image__():
         demo_image = DEMO_IMAGE
         image = np.array(Image.open(demo_image))
 
+    save_image = st.sidebar.checkbox("Salvar output")
+
     st.sidebar.text("Imagem original")
     st.sidebar.image(image)
 
@@ -75,5 +77,10 @@ def __run_on_image__():
                 )
             st.subheader("Output image")
             st.image(out_image, use_column_width=True)
+
+            if save_image:
+                im = Image.fromarray(out_image)
+                im.save(output_filepath + '/output1.jpeg')
+
         except TypeError:
             pass
