@@ -44,6 +44,3 @@ def runDetection():
 
 if __name__ == "__main__":
     main()
-    # print("Running Detection")
-    # runDetection()
-    # print("AAA Detection")

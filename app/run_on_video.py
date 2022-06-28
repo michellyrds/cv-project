@@ -25,7 +25,7 @@ def __run_on_video__():
     use_webcam = st.sidebar.button("Usar webcam")
     record = st.sidebar.checkbox("Gravar vídeo")
 
-    if record:
+    if record and use_webcam:
         st.checkbox("Gravando...", value=True)
 
     st.markdown(
@@ -78,6 +78,8 @@ def __run_on_video__():
     out = cv2.VideoWriter(
         output_filepath + "/output1.mp4", codec, fps_input, (width, height)
     )
+
+    save_video = st.sidebar.checkbox("Salvar output")
 
     st.sidebar.text("Input Video")
     st.sidebar.video(tffile.name)
@@ -137,7 +139,8 @@ def __run_on_video__():
                 fps = 1 / (currTime - prevTime)
                 prevTime = currTime
 
-                out.write(frame)
+                if save_video:
+                    out.write(frame)
 
                 kpi1_text.write(
                     header_html.format(int(fps)),
@@ -156,6 +159,10 @@ def __run_on_video__():
                 frame = image_resize(image=frame, width=640)
                 stframe.image(frame, channels="BGR", use_column_width=True)
 
+        video.release()
+        out.release()
+
+    if save_video:
         st.text("Vídeo processado")
         output_video = open(output_filepath + "/output1.mp4", "rb")
         
@@ -163,9 +170,6 @@ def __run_on_video__():
         videoAtt = json.loads(videoAtt)
         mongoConnect = get_database("Videos")
         mongoConnect.get_collection("OriginalVideos").insert_one({'_id': videoAtt['id'], 'path': videoAtt['path']})
-        
+
         out_bytes = output_video.read()
         st.video(out_bytes)
-
-        video.release()
-        out.release()
