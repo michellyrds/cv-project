@@ -11,7 +11,7 @@ def saveVideo(video):
     return f.text
 
 def saveImage(image):
-    files = {'image': ('imagem', image,'image/jpeg')}
+    files = {'image': ('imagem', image,'image/png')}
     f = requests.post("https://ex-machina-turbo.herokuapp.com/api/uploadimage", files=files)
     return f.text
 

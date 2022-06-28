@@ -15,7 +15,7 @@ mp_face_mesh = face_mesh
 input_filepath = "media/input"
 output_filepath = "media/output"
 
-DEMO_IMAGE = input_filepath + "/Maeve-The-Boys.jpg"
+DEMO_IMAGE = input_filepath + "/Maeve-The-Boys.png"
 DEMO_VIDEO = input_filepath + "/demo.mp4"
 
 
@@ -83,8 +83,8 @@ def __run_on_image__():
         except TypeError:
             pass
     
-    mongoConnect = get_database("Videos")
-    col = mongoConnect.get_collection('image')
+    mongoConnect = get_database("Images")
+    col = mongoConnect.get_collection('Images')
     imgAtt = json.loads(imgAtt)
 
     col.insert_one({'_id': imgAtt['id'], 'path': imgAtt['path']})

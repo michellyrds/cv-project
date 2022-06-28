@@ -73,6 +73,7 @@ def __run_on_video__():
     fps_input = int(video.get(cv2.CAP_PROP_FPS))
 
     # Recording
+    print("Recording video...")
     codec = cv2.VideoWriter_fourcc("m", "p", "4", "v")
     out = cv2.VideoWriter(
         output_filepath + "/output1.mp4", codec, fps_input, (width, height)
@@ -114,7 +115,7 @@ def __run_on_video__():
             ret, frame = video.read()
 
             if not ret:
-                continue
+                break
 
             results = face_mesh.process(frame)
             frame.flags.writeable = True
@@ -136,8 +137,7 @@ def __run_on_video__():
                 fps = 1 / (currTime - prevTime)
                 prevTime = currTime
 
-                if record:
-                    out.write(frame)
+                out.write(frame)
 
                 kpi1_text.write(
                     header_html.format(int(fps)),
@@ -162,7 +162,7 @@ def __run_on_video__():
         videoAtt = saveVideo(output_video)
         videoAtt = json.loads(videoAtt)
         mongoConnect = get_database("Videos")
-        mongoConnect.get_collection("video").insert_one({'_id': videoAtt['id'], 'path': videoAtt['path']})
+        mongoConnect.get_collection("OriginalVideos").insert_one({'_id': videoAtt['id'], 'path': videoAtt['path']})
         
         out_bytes = output_video.read()
         st.video(out_bytes)
