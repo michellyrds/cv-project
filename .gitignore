@@ -130,4 +130,10 @@ dmypy.json
 
 .vscode/
 
+data/cropped/*
+data/original/*
+!data/cropped/.gitkeep
+!data/original/.gitkeep
+
+
 data/

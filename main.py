@@ -4,6 +4,7 @@ from app.about_app import __about_app__
 from app.run_on_image import __run_on_image__
 from app.run_on_video import __run_on_video__
 from app.utils import sidebar_html
+import model.detection as detection
 
 
 def main():
@@ -38,6 +39,11 @@ def main():
     elif app_mode == run_on_image:
         __run_on_image__()
 
+def runDetection():
+    detection.generateCroppedImagesFromVideo('./media/input/Ll-2.mp4')
 
 if __name__ == "__main__":
-    main()
+    #main()
+    print("Running Detection")
+    runDetection()
+    print("AAA Detection")
