@@ -1,12 +1,15 @@
 import tempfile
 import time
+import json
 
 import cv2
 import mediapipe.python.solutions.drawing_utils as drawing_utils
 import mediapipe.python.solutions.face_mesh as face_mesh
 import streamlit as st
+from app.save_on_cloud import saveVideo
 
 from app.utils import header_html, image_resize, sidebar_html
+from database.main import get_database
 
 mp_drawing = drawing_utils
 mp_face_mesh = face_mesh
@@ -155,6 +158,12 @@ def __run_on_video__():
 
         st.text("Vídeo processado")
         output_video = open(output_filepath + "/output1.mp4", "rb")
+        
+        videoAtt = saveVideo(output_video)
+        videoAtt = json.loads(videoAtt)
+        mongoConnect = get_database("Videos")
+        mongoConnect.getCollection("video").insert_one({'_id': videoAtt['id'], 'path': videoAtt['path']})
+        
         out_bytes = output_video.read()
         st.video(out_bytes)
 
