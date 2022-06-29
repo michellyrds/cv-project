@@ -135,8 +135,12 @@ data/original/*
 !data/cropped/.gitkeep
 !data/original/.gitkeep
 
+media/*
+
 media/temp/*
 !media/temp/.gitkeep
 
 
 data/
+
+.env
