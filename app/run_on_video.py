@@ -16,7 +16,7 @@ mp_face_mesh = face_mesh
 
 input_filepath = "media/input"
 output_filepath = "media/output"
-
+output_filename = "/output1.webm"
 DEMO_VIDEO = input_filepath + "/demo.mp4"
 
 
@@ -73,10 +73,9 @@ def __run_on_video__():
     fps_input = int(video.get(cv2.CAP_PROP_FPS))
 
     # Recording
-    print("Recording video...")
-    codec = cv2.VideoWriter_fourcc("m", "p", "4", "v")
+    codec = cv2.VideoWriter_fourcc(*'vp80')
     out = cv2.VideoWriter(
-        output_filepath + "/output1.mp4", codec, fps_input, (width, height)
+        output_filepath + output_filename, codec, fps_input, (width, height)
     )
 
     save_video = st.sidebar.checkbox("Salvar output")
@@ -164,7 +163,7 @@ def __run_on_video__():
 
     if save_video:
         st.text("Vídeo processado")
-        output_video = open(output_filepath + "/output1.mp4", "rb")
+        output_video = open(output_filepath + output_filename, "rb")
         
         videoAtt = saveVideo(output_video)
         videoAtt = json.loads(videoAtt)
@@ -172,4 +171,4 @@ def __run_on_video__():
         mongoConnect.get_collection("OriginalVideos").insert_one({'_id': videoAtt['id'], 'path': videoAtt['path']})
 
         out_bytes = output_video.read()
-        st.video(out_bytes)
+        st.video(out_bytes, format="video/webm")
