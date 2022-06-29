@@ -44,7 +44,7 @@ def convertFramesToTimestamp(frameStamps, fps):
     timeStamps = []
 
     for frameData in frameStamps: 
-        timeStamps.append((secondsToTimeCode(frameData.start/fps), secondsToTimeCode(frameData.end/fps)))
+        timeStamps.append((secondsToTimeCode(frameData['start']/fps), secondsToTimeCode(frameData['end']/fps)))
 
     print(timeStamps)
 

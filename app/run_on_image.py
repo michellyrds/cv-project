@@ -85,22 +85,11 @@ def __run_on_image__():
             if save_image:
                 im = Image.fromarray(out_image)
                 im.save(output_filepath + '/output1.jpeg')
-                try:
+                mongoConnect = get_database("Images")
+                col = mongoConnect.get_collection('Images')
+                imgAtt = json.loads(imgAtt)
 
-                    outpImg = open(output_filepath + '/output1.jpeg', 'rb')
-                    imgAtt = saveImage(outpImg)
-                    mongoConnect = get_database("Images")
-                    col = mongoConnect.get_collection('Images')
-                    imgAtt = json.loads(imgAtt)
-
-                    col.insert_one({'_id': imgAtt['id'], 'path': imgAtt['path']})
-                    link = '[Imagem online]({})'.format(imgAtt['path'])
-                    st.markdown(link, unsafe_allow_html=True)
-
-                except Exception as e:
-                    print(e)
-
-            st.image(out_image, use_column_width=True)
+                col.insert_one({'_id': imgAtt['id'], 'path': imgAtt['path']})
 
         except TypeError:
             pass
