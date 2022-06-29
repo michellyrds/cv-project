@@ -3,8 +3,8 @@ import time
 import json
 
 import cv2
-import mediapipe.solutions.drawing_utils as drawing_utils
-import mediapipe.solutions.face_mesh as face_mesh
+import mediapipe.python.solutions.drawing_utils as drawing_utils
+import mediapipe.python.solutions.face_mesh as face_mesh
 import streamlit as st
 from app.save_on_cloud import saveVideo
 
@@ -174,14 +174,17 @@ def __run_on_video__():
     if save_video:
         st.text("Vídeo processado")
         output_video = open(output_filepath + output_filename, "rb")
-        
-        videoAtt = saveVideo(output_video)
-        videoAtt = json.loads(videoAtt)
-        mongoConnect = get_database("Videos")
-        mongoConnect.get_collection("OriginalVideos").insert_one({'_id': videoAtt['id'], 'path': videoAtt['path']})
 
-        out_bytes = output_video.read()
-        st.video(out_bytes, format="video/webm")
+        try:
+            videoAtt = saveVideo(output_video)
+            videoAtt = json.loads(videoAtt)
+            link = '[Vídeo online]({})'.format(videoAtt['path'])
+            st.markdown(link, unsafe_allow_html=True)
 
-        convertFramesToTimestamp(frameStamps=frameStamps, fps=fps_input)
-        
+            mongoConnect = get_database("Videos")
+            mongoConnect.get_collection("OriginalVideos").insert_one({'_id': videoAtt['id'], 'path': videoAtt['path']})
+        except Exception as e:
+            print(e)
+
+        # out_bytes = output_video.read()
+        # st.video(out_bytes, format="video/webm")

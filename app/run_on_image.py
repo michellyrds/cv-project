@@ -65,7 +65,6 @@ def __run_on_image__():
     ) as face_mesh:
         results = face_mesh.process(image)
         out_image = image.copy()
-        imgAtt = saveImage(out_image)
         try:
             for face_landmarks in results.multi_face_landmarks:
                 face_count += 1
@@ -80,19 +79,30 @@ def __run_on_image__():
                     header_html.format(face_count),
                     unsafe_allow_html=True,
                 )
+            
             st.subheader("Output image")
-            st.image(out_image, use_column_width=True)
 
             if save_image:
                 im = Image.fromarray(out_image)
                 im.save(output_filepath + '/output1.jpeg')
+                try:
+
+                    outpImg = open(output_filepath + '/output1.jpeg', 'rb')
+                    imgAtt = saveImage(outpImg)
+                    mongoConnect = get_database("Images")
+                    col = mongoConnect.get_collection('Images')
+                    imgAtt = json.loads(imgAtt)
+
+                    col.insert_one({'_id': imgAtt['id'], 'path': imgAtt['path']})
+                    link = '[Imagem online]({})'.format(imgAtt['path'])
+                    st.markdown(link, unsafe_allow_html=True)
+
+                except Exception as e:
+                    print(e)
+
+            st.image(out_image, use_column_width=True)
 
         except TypeError:
             pass
     
-    mongoConnect = get_database("Images")
-    col = mongoConnect.get_collection('Images')
-    imgAtt = json.loads(imgAtt)
-
-    col.insert_one({'_id': imgAtt['id'], 'path': imgAtt['path']})
     
