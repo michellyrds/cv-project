@@ -1,4 +1,5 @@
 import moviepy.editor as mpy
+import time
 
 vcodec =   "libx264"
 
@@ -36,6 +37,16 @@ def edit_video(videopath, savetitle, cuts, w = 720, h = 480):
     video.close()
     return paths
 
+def secondsToTimeCode(seconds):
+    return time.strftime('%H:%M:%S.%f', time.gmtime(seconds))[:-3]
+
+def convertFramesToTimestamp(frameStamps, fps):
+    timeStamps = []
+
+    for frameData in frameStamps: 
+        timeStamps.append((secondsToTimeCode(frameData['start']/fps), secondsToTimeCode(frameData['end']/fps)))
+
+    print(timeStamps)
 
 if __name__ == '__main__':
     videopath = "media/input/AMD EPYC 2 Geracao.mp4"

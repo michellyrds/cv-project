@@ -10,6 +10,7 @@ from app.save_on_cloud import saveVideo
 
 from app.utils import header_html, image_resize, sidebar_html
 from database.main import get_database
+from .ultra_video_cutter_2027 import convertFramesToTimestamp, edit_video
 
 mp_drawing = drawing_utils
 mp_face_mesh = face_mesh
@@ -53,7 +54,7 @@ def __run_on_video__():
 
     stframe = st.empty()
     video_file_buffer = st.sidebar.file_uploader(
-        "Faça o upload do vídeo aqui", type=["mp4", "mov", "avi", "asf", "m4v"]
+        "Faça o upload do vídeo aqui", type=["mp4", "mov", "avi", "asf", "m4v", "webm"]
     )
     tffile = tempfile.NamedTemporaryFile(delete=False)
 
@@ -103,6 +104,7 @@ def __run_on_video__():
         kpi3_text = st.markdown("0")
 
     st.markdown("<hr/>", unsafe_allow_html=True)
+    frameStamps = []
 
     with mp_face_mesh.FaceMesh(
         max_num_faces=max_faces,
@@ -110,7 +112,8 @@ def __run_on_video__():
         min_tracking_confidence=tracking_confidence,
     ) as face_mesh:
         prevTime = 0
-
+        isCreating = False
+        startFrame = 0
         while video.isOpened():
             i += 1
             ret, frame = video.read()
@@ -125,6 +128,11 @@ def __run_on_video__():
             if results.multi_face_landmarks:
                 for face_landmarks in results.multi_face_landmarks:
                     face_count += 1
+
+                    if(not isCreating):
+                        isCreating = True
+                        startFrame = i
+
                     mp_drawing.draw_landmarks(
                         image=frame,
                         landmark_list=face_landmarks,
@@ -157,24 +165,25 @@ def __run_on_video__():
                 frame = cv2.resize(frame, (0, 0), fx=0.8, fy=0.8)
                 frame = image_resize(image=frame, width=640)
                 stframe.image(frame, channels="BGR", use_column_width=True)
-
+            if(face_count == 0):
+                isCreating = False
+                frameStamps.append({"start": startFrame, "end": i})
         video.release()
         out.release()
 
     if save_video:
         st.text("Vídeo processado")
         output_video = open(output_filepath + output_filename, "rb")
-
         try:
             videoAtt = saveVideo(output_video)
             videoAtt = json.loads(videoAtt)
-            link = '[Vídeo online]({})'.format(videoAtt['path'])
-            st.markdown(link, unsafe_allow_html=True)
-
             mongoConnect = get_database("Videos")
             mongoConnect.get_collection("OriginalVideos").insert_one({'_id': videoAtt['id'], 'path': videoAtt['path']})
-        except Exception as e:
-            print(e)
+        except Exception:
+            pass
 
-        # out_bytes = output_video.read()
-        # st.video(out_bytes, format="video/webm")
+        out_bytes = output_video.read()
+        st.video(out_bytes, format="video/webm")
+
+        convertFramesToTimestamp(frameStamps=frameStamps, fps=fps_input)
+        
