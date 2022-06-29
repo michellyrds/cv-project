@@ -2,9 +2,12 @@ import mediapipe.python.solutions.drawing_utils as drawing_utils
 import mediapipe.python.solutions.face_mesh as face_mesh
 import numpy as np
 import streamlit as st
+import json
 from PIL import Image
+from app.save_on_cloud import saveImage
 
 from app.utils import header_html, sidebar_html
+from database.main import get_database
 
 mp_drawing = drawing_utils
 mp_face_mesh = face_mesh
@@ -54,6 +57,7 @@ def __run_on_image__():
     st.sidebar.image(image)
 
     face_count = 0
+    imgAtt = {}
     with mp_face_mesh.FaceMesh(
         static_image_mode=True,
         max_num_faces=max_faces,
@@ -61,6 +65,7 @@ def __run_on_image__():
     ) as face_mesh:
         results = face_mesh.process(image)
         out_image = image.copy()
+        imgAtt = saveImage(out_image)
         try:
             for face_landmarks in results.multi_face_landmarks:
                 face_count += 1
@@ -84,3 +89,10 @@ def __run_on_image__():
 
         except TypeError:
             pass
+    
+    mongoConnect = get_database("Images")
+    col = mongoConnect.get_collection('Images')
+    imgAtt = json.loads(imgAtt)
+
+    col.insert_one({'_id': imgAtt['id'], 'path': imgAtt['path']})
+    
