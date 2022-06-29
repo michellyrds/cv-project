@@ -65,7 +65,6 @@ def __run_on_image__():
     ) as face_mesh:
         results = face_mesh.process(image)
         out_image = image.copy()
-        imgAtt = saveImage(out_image)
         try:
             for face_landmarks in results.multi_face_landmarks:
                 face_count += 1
@@ -86,6 +85,8 @@ def __run_on_image__():
             if save_image:
                 im = Image.fromarray(out_image)
                 im.save(output_filepath + '/output1.jpeg')
+                outpImg = open(output_filepath + '/output1.jpeg', 'rb')
+                imgAtt = saveImage(outpImg)
 
         except TypeError:
             pass
