@@ -6,18 +6,18 @@ def checkWorking():
     print(f.text)
 
 def saveVideo(video):
-    files = {'video': ('video', video,'video/mpeg')}
+    files = {'video': ('video', video,'video/webm')}
     f = requests.post("https://ex-machina-turbo.herokuapp.com/api/uploadvideo", files=files)
     return f.text
 
 def saveImage(image):
-    files = {'image': ('imagem', image,'image/png')}
+    files = {'image': ('imagem', image,'image/jpeg')}
     f = requests.post("https://ex-machina-turbo.herokuapp.com/api/uploadimage", files=files)
     return f.text
 
 # checkWorking()
 
-# video = open('media/input/testeNovo1.mp4', 'rb')
+# video = open('media/input/demo.mp4', 'rb')
 # print(video)
 # saveVideo(video)
 

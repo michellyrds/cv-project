@@ -15,7 +15,7 @@ mp_face_mesh = face_mesh
 input_filepath = "media/input"
 output_filepath = "media/output"
 
-DEMO_IMAGE = input_filepath + "/Maeve-The-Boys.png"
+DEMO_IMAGE = input_filepath + "/Maeve-The-Boys.jpg"
 DEMO_VIDEO = input_filepath + "/demo.mp4"
 
 
