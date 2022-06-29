@@ -1,303 +1,336 @@
-# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ==============================================================================
-
-"""Contains the definition of the Inception Resnet V1 architecture.
-As described in http://arxiv.org/abs/1602.07261.
-  Inception-v4, Inception-ResNet and the Impact of Residual Connections
-    on Learning
-  Christian Szegedy, Sergey Ioffe, Vincent Vanhoucke, Alex Alemi
-"""
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import tensorflow as tf
-import tensorflow.contrib.slim as slim
+import os
+import requests
+from requests.adapters import HTTPAdapter
 
-# Inception-Resnet-A
-def block35(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
-    """Builds the 35x35 resnet block."""
-    with tf.variable_scope(scope, "Block35", [net], reuse=reuse):
-        with tf.variable_scope("Branch_0"):
-            tower_conv = slim.conv2d(net, 32, 1, scope="Conv2d_1x1")
-        with tf.variable_scope("Branch_1"):
-            tower_conv1_0 = slim.conv2d(net, 32, 1, scope="Conv2d_0a_1x1")
-            tower_conv1_1 = slim.conv2d(tower_conv1_0, 32, 3, scope="Conv2d_0b_3x3")
-        with tf.variable_scope("Branch_2"):
-            tower_conv2_0 = slim.conv2d(net, 32, 1, scope="Conv2d_0a_1x1")
-            tower_conv2_1 = slim.conv2d(tower_conv2_0, 32, 3, scope="Conv2d_0b_3x3")
-            tower_conv2_2 = slim.conv2d(tower_conv2_1, 32, 3, scope="Conv2d_0c_3x3")
-        mixed = tf.concat([tower_conv, tower_conv1_1, tower_conv2_2], 3)
-        up = slim.conv2d(
-            mixed,
-            net.get_shape()[3],
-            1,
-            normalizer_fn=None,
-            activation_fn=None,
-            scope="Conv2d_1x1",
+import torch
+from torch import nn
+from torch.nn import functional as F
+from download import download_url_to_file
+
+class BasicConv2d(nn.Module):
+
+    def __init__(self, in_planes, out_planes, kernel_size, stride, padding=0):
+        super().__init__()
+        self.conv = nn.Conv2d(
+            in_planes, out_planes,
+            kernel_size=kernel_size, stride=stride,
+            padding=padding, bias=False
+        ) # verify bias false
+        self.bn = nn.BatchNorm2d(
+            out_planes,
+            eps=0.001, # value found in tensorflow
+            momentum=0.1, # default pytorch value
+            affine=True
         )
-        net += scale * up
-        if activation_fn:
-            net = activation_fn(net)
-    return net
+        self.relu = nn.ReLU(inplace=False)
+
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.bn(x)
+        x = self.relu(x)
+        return x
 
 
-# Inception-Resnet-B
-def block17(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
-    """Builds the 17x17 resnet block."""
-    with tf.variable_scope(scope, "Block17", [net], reuse=reuse):
-        with tf.variable_scope("Branch_0"):
-            tower_conv = slim.conv2d(net, 128, 1, scope="Conv2d_1x1")
-        with tf.variable_scope("Branch_1"):
-            tower_conv1_0 = slim.conv2d(net, 128, 1, scope="Conv2d_0a_1x1")
-            tower_conv1_1 = slim.conv2d(
-                tower_conv1_0, 128, [1, 7], scope="Conv2d_0b_1x7"
-            )
-            tower_conv1_2 = slim.conv2d(
-                tower_conv1_1, 128, [7, 1], scope="Conv2d_0c_7x1"
-            )
-        mixed = tf.concat([tower_conv, tower_conv1_2], 3)
-        up = slim.conv2d(
-            mixed,
-            net.get_shape()[3],
-            1,
-            normalizer_fn=None,
-            activation_fn=None,
-            scope="Conv2d_1x1",
-        )
-        net += scale * up
-        if activation_fn:
-            net = activation_fn(net)
-    return net
+class Block35(nn.Module):
 
+    def __init__(self, scale=1.0):
+        super().__init__()
 
-# Inception-Resnet-C
-def block8(net, scale=1.0, activation_fn=tf.nn.relu, scope=None, reuse=None):
-    """Builds the 8x8 resnet block."""
-    with tf.variable_scope(scope, "Block8", [net], reuse=reuse):
-        with tf.variable_scope("Branch_0"):
-            tower_conv = slim.conv2d(net, 192, 1, scope="Conv2d_1x1")
-        with tf.variable_scope("Branch_1"):
-            tower_conv1_0 = slim.conv2d(net, 192, 1, scope="Conv2d_0a_1x1")
-            tower_conv1_1 = slim.conv2d(
-                tower_conv1_0, 192, [1, 3], scope="Conv2d_0b_1x3"
-            )
-            tower_conv1_2 = slim.conv2d(
-                tower_conv1_1, 192, [3, 1], scope="Conv2d_0c_3x1"
-            )
-        mixed = tf.concat([tower_conv, tower_conv1_2], 3)
-        up = slim.conv2d(
-            mixed,
-            net.get_shape()[3],
-            1,
-            normalizer_fn=None,
-            activation_fn=None,
-            scope="Conv2d_1x1",
-        )
-        net += scale * up
-        if activation_fn:
-            net = activation_fn(net)
-    return net
+        self.scale = scale
 
+        self.branch0 = BasicConv2d(256, 32, kernel_size=1, stride=1)
 
-def reduction_a(net, k, l, m, n):
-    with tf.variable_scope("Branch_0"):
-        tower_conv = slim.conv2d(
-            net, n, 3, stride=2, padding="VALID", scope="Conv2d_1a_3x3"
-        )
-    with tf.variable_scope("Branch_1"):
-        tower_conv1_0 = slim.conv2d(net, k, 1, scope="Conv2d_0a_1x1")
-        tower_conv1_1 = slim.conv2d(tower_conv1_0, l, 3, scope="Conv2d_0b_3x3")
-        tower_conv1_2 = slim.conv2d(
-            tower_conv1_1, m, 3, stride=2, padding="VALID", scope="Conv2d_1a_3x3"
-        )
-    with tf.variable_scope("Branch_2"):
-        tower_pool = slim.max_pool2d(
-            net, 3, stride=2, padding="VALID", scope="MaxPool_1a_3x3"
-        )
-    net = tf.concat([tower_conv, tower_conv1_2, tower_pool], 3)
-    return net
-
-
-def reduction_b(net):
-    with tf.variable_scope("Branch_0"):
-        tower_conv = slim.conv2d(net, 256, 1, scope="Conv2d_0a_1x1")
-        tower_conv_1 = slim.conv2d(
-            tower_conv, 384, 3, stride=2, padding="VALID", scope="Conv2d_1a_3x3"
-        )
-    with tf.variable_scope("Branch_1"):
-        tower_conv1 = slim.conv2d(net, 256, 1, scope="Conv2d_0a_1x1")
-        tower_conv1_1 = slim.conv2d(
-            tower_conv1, 256, 3, stride=2, padding="VALID", scope="Conv2d_1a_3x3"
-        )
-    with tf.variable_scope("Branch_2"):
-        tower_conv2 = slim.conv2d(net, 256, 1, scope="Conv2d_0a_1x1")
-        tower_conv2_1 = slim.conv2d(tower_conv2, 256, 3, scope="Conv2d_0b_3x3")
-        tower_conv2_2 = slim.conv2d(
-            tower_conv2_1, 256, 3, stride=2, padding="VALID", scope="Conv2d_1a_3x3"
-        )
-    with tf.variable_scope("Branch_3"):
-        tower_pool = slim.max_pool2d(
-            net, 3, stride=2, padding="VALID", scope="MaxPool_1a_3x3"
-        )
-    net = tf.concat([tower_conv_1, tower_conv1_1, tower_conv2_2, tower_pool], 3)
-    return net
-
-
-def inference(
-    images,
-    keep_probability,
-    phase_train=True,
-    bottleneck_layer_size=128,
-    weight_decay=0.0,
-    reuse=None,
-):
-    batch_norm_params = {
-        # Decay for the moving averages.
-        "decay": 0.995,
-        # epsilon to prevent 0s in variance.
-        "epsilon": 0.001,
-        # force in-place updates of mean and variance estimates
-        "updates_collections": None,
-        # Moving averages ends up in the trainable variables collection
-        "variables_collections": [tf.GraphKeys.TRAINABLE_VARIABLES],
-    }
-
-    with slim.arg_scope(
-        [slim.conv2d, slim.fully_connected],
-        weights_initializer=slim.initializers.xavier_initializer(),
-        weights_regularizer=slim.l2_regularizer(weight_decay),
-        normalizer_fn=slim.batch_norm,
-        normalizer_params=batch_norm_params,
-    ):
-        return inception_resnet_v1(
-            images,
-            is_training=phase_train,
-            dropout_keep_prob=keep_probability,
-            bottleneck_layer_size=bottleneck_layer_size,
-            reuse=reuse,
+        self.branch1 = nn.Sequential(
+            BasicConv2d(256, 32, kernel_size=1, stride=1),
+            BasicConv2d(32, 32, kernel_size=3, stride=1, padding=1)
         )
 
+        self.branch2 = nn.Sequential(
+            BasicConv2d(256, 32, kernel_size=1, stride=1),
+            BasicConv2d(32, 32, kernel_size=3, stride=1, padding=1),
+            BasicConv2d(32, 32, kernel_size=3, stride=1, padding=1)
+        )
 
-def inception_resnet_v1(
-    inputs,
-    is_training=True,
-    dropout_keep_prob=0.8,
-    bottleneck_layer_size=128,
-    reuse=None,
-    scope="InceptionResnetV1",
-):
-    """Creates the Inception Resnet V1 model.
-    Args:
-      inputs: a 4-D tensor of size [batch_size, height, width, 3].
-      num_classes: number of predicted classes.
-      is_training: whether is training or not.
-      dropout_keep_prob: float, the fraction to keep before final layer.
-      reuse: whether or not the network and its variables should be reused. To be
-        able to reuse 'scope' must be given.
-      scope: Optional variable_scope.
-    Returns:
-      logits: the logits outputs of the model.
-      end_points: the set of end_points from the inception model.
+        self.conv2d = nn.Conv2d(96, 256, kernel_size=1, stride=1)
+        self.relu = nn.ReLU(inplace=False)
+
+    def forward(self, x):
+        x0 = self.branch0(x)
+        x1 = self.branch1(x)
+        x2 = self.branch2(x)
+        out = torch.cat((x0, x1, x2), 1)
+        out = self.conv2d(out)
+        out = out * self.scale + x
+        out = self.relu(out)
+        return out
+
+
+class Block17(nn.Module):
+
+    def __init__(self, scale=1.0):
+        super().__init__()
+
+        self.scale = scale
+
+        self.branch0 = BasicConv2d(896, 128, kernel_size=1, stride=1)
+
+        self.branch1 = nn.Sequential(
+            BasicConv2d(896, 128, kernel_size=1, stride=1),
+            BasicConv2d(128, 128, kernel_size=(1,7), stride=1, padding=(0,3)),
+            BasicConv2d(128, 128, kernel_size=(7,1), stride=1, padding=(3,0))
+        )
+
+        self.conv2d = nn.Conv2d(256, 896, kernel_size=1, stride=1)
+        self.relu = nn.ReLU(inplace=False)
+
+    def forward(self, x):
+        x0 = self.branch0(x)
+        x1 = self.branch1(x)
+        out = torch.cat((x0, x1), 1)
+        out = self.conv2d(out)
+        out = out * self.scale + x
+        out = self.relu(out)
+        return out
+
+
+class Block8(nn.Module):
+
+    def __init__(self, scale=1.0, noReLU=False):
+        super().__init__()
+
+        self.scale = scale
+        self.noReLU = noReLU
+
+        self.branch0 = BasicConv2d(1792, 192, kernel_size=1, stride=1)
+
+        self.branch1 = nn.Sequential(
+            BasicConv2d(1792, 192, kernel_size=1, stride=1),
+            BasicConv2d(192, 192, kernel_size=(1,3), stride=1, padding=(0,1)),
+            BasicConv2d(192, 192, kernel_size=(3,1), stride=1, padding=(1,0))
+        )
+
+        self.conv2d = nn.Conv2d(384, 1792, kernel_size=1, stride=1)
+        if not self.noReLU:
+            self.relu = nn.ReLU(inplace=False)
+
+    def forward(self, x):
+        x0 = self.branch0(x)
+        x1 = self.branch1(x)
+        out = torch.cat((x0, x1), 1)
+        out = self.conv2d(out)
+        out = out * self.scale + x
+        if not self.noReLU:
+            out = self.relu(out)
+        return out
+
+
+class Mixed_6a(nn.Module):
+
+    def __init__(self):
+        super().__init__()
+
+        self.branch0 = BasicConv2d(256, 384, kernel_size=3, stride=2)
+
+        self.branch1 = nn.Sequential(
+            BasicConv2d(256, 192, kernel_size=1, stride=1),
+            BasicConv2d(192, 192, kernel_size=3, stride=1, padding=1),
+            BasicConv2d(192, 256, kernel_size=3, stride=2)
+        )
+
+        self.branch2 = nn.MaxPool2d(3, stride=2)
+
+    def forward(self, x):
+        x0 = self.branch0(x)
+        x1 = self.branch1(x)
+        x2 = self.branch2(x)
+        out = torch.cat((x0, x1, x2), 1)
+        return out
+
+
+class Mixed_7a(nn.Module):
+
+    def __init__(self):
+        super().__init__()
+
+        self.branch0 = nn.Sequential(
+            BasicConv2d(896, 256, kernel_size=1, stride=1),
+            BasicConv2d(256, 384, kernel_size=3, stride=2)
+        )
+
+        self.branch1 = nn.Sequential(
+            BasicConv2d(896, 256, kernel_size=1, stride=1),
+            BasicConv2d(256, 256, kernel_size=3, stride=2)
+        )
+
+        self.branch2 = nn.Sequential(
+            BasicConv2d(896, 256, kernel_size=1, stride=1),
+            BasicConv2d(256, 256, kernel_size=3, stride=1, padding=1),
+            BasicConv2d(256, 256, kernel_size=3, stride=2)
+        )
+
+        self.branch3 = nn.MaxPool2d(3, stride=2)
+
+    def forward(self, x):
+        x0 = self.branch0(x)
+        x1 = self.branch1(x)
+        x2 = self.branch2(x)
+        x3 = self.branch3(x)
+        out = torch.cat((x0, x1, x2, x3), 1)
+        return out
+
+
+class InceptionResnetV1(nn.Module):
+    """Inception Resnet V1 model with optional loading of pretrained weights.
+    Model parameters can be loaded based on pretraining on the VGGFace2 or CASIA-Webface
+    datasets. Pretrained state_dicts are automatically downloaded on model instantiation if
+    requested and cached in the torch cache. Subsequent instantiations use the cache rather than
+    redownloading.
+    Keyword Arguments:
+        pretrained {str} -- Optional pretraining dataset. Either 'vggface2' or 'casia-webface'.
+            (default: {None})
+        classify {bool} -- Whether the model should output classification probabilities or feature
+            embeddings. (default: {False})
+        num_classes {int} -- Number of output classes. If 'pretrained' is set and num_classes not
+            equal to that used for the pretrained model, the final linear layer will be randomly
+            initialized. (default: {None})
+        dropout_prob {float} -- Dropout probability. (default: {0.6})
     """
-    end_points = {}
+    def __init__(self, pretrained=None, classify=False, num_classes=None, dropout_prob=0.6, device=None):
+        super().__init__()
 
-    with tf.variable_scope(scope, "InceptionResnetV1", [inputs], reuse=reuse):
-        with slim.arg_scope([slim.batch_norm, slim.dropout], is_training=is_training):
-            with slim.arg_scope(
-                [slim.conv2d, slim.max_pool2d, slim.avg_pool2d],
-                stride=1,
-                padding="SAME",
-            ):
+        # Set simple attributes
+        self.pretrained = pretrained
+        self.classify = classify
+        self.num_classes = num_classes
 
-                # 149 x 149 x 32
-                net = slim.conv2d(
-                    inputs, 32, 3, stride=2, padding="VALID", scope="Conv2d_1a_3x3"
-                )
-                end_points["Conv2d_1a_3x3"] = net
-                # 147 x 147 x 32
-                net = slim.conv2d(net, 32, 3, padding="VALID", scope="Conv2d_2a_3x3")
-                end_points["Conv2d_2a_3x3"] = net
-                # 147 x 147 x 64
-                net = slim.conv2d(net, 64, 3, scope="Conv2d_2b_3x3")
-                end_points["Conv2d_2b_3x3"] = net
-                # 73 x 73 x 64
-                net = slim.max_pool2d(
-                    net, 3, stride=2, padding="VALID", scope="MaxPool_3a_3x3"
-                )
-                end_points["MaxPool_3a_3x3"] = net
-                # 73 x 73 x 80
-                net = slim.conv2d(net, 80, 1, padding="VALID", scope="Conv2d_3b_1x1")
-                end_points["Conv2d_3b_1x1"] = net
-                # 71 x 71 x 192
-                net = slim.conv2d(net, 192, 3, padding="VALID", scope="Conv2d_4a_3x3")
-                end_points["Conv2d_4a_3x3"] = net
-                # 35 x 35 x 256
-                net = slim.conv2d(
-                    net, 256, 3, stride=2, padding="VALID", scope="Conv2d_4b_3x3"
-                )
-                end_points["Conv2d_4b_3x3"] = net
+        if pretrained == 'vggface2':
+            tmp_classes = 8631
+        elif pretrained == 'casia-webface':
+            tmp_classes = 10575
+        elif pretrained is None and self.classify and self.num_classes is None:
+            raise Exception('If "pretrained" is not specified and "classify" is True, "num_classes" must be specified')
 
-                # 5 x Inception-resnet-A
-                net = slim.repeat(net, 5, block35, scale=0.17)
-                end_points["Mixed_5a"] = net
 
-                # Reduction-A
-                with tf.variable_scope("Mixed_6a"):
-                    net = reduction_a(net, 192, 192, 256, 384)
-                end_points["Mixed_6a"] = net
+        # Define layers
+        self.conv2d_1a = BasicConv2d(3, 32, kernel_size=3, stride=2)
+        self.conv2d_2a = BasicConv2d(32, 32, kernel_size=3, stride=1)
+        self.conv2d_2b = BasicConv2d(32, 64, kernel_size=3, stride=1, padding=1)
+        self.maxpool_3a = nn.MaxPool2d(3, stride=2)
+        self.conv2d_3b = BasicConv2d(64, 80, kernel_size=1, stride=1)
+        self.conv2d_4a = BasicConv2d(80, 192, kernel_size=3, stride=1)
+        self.conv2d_4b = BasicConv2d(192, 256, kernel_size=3, stride=2)
+        self.repeat_1 = nn.Sequential(
+            Block35(scale=0.17),
+            Block35(scale=0.17),
+            Block35(scale=0.17),
+            Block35(scale=0.17),
+            Block35(scale=0.17),
+        )
+        self.mixed_6a = Mixed_6a()
+        self.repeat_2 = nn.Sequential(
+            Block17(scale=0.10),
+            Block17(scale=0.10),
+            Block17(scale=0.10),
+            Block17(scale=0.10),
+            Block17(scale=0.10),
+            Block17(scale=0.10),
+            Block17(scale=0.10),
+            Block17(scale=0.10),
+            Block17(scale=0.10),
+            Block17(scale=0.10),
+        )
+        self.mixed_7a = Mixed_7a()
+        self.repeat_3 = nn.Sequential(
+            Block8(scale=0.20),
+            Block8(scale=0.20),
+            Block8(scale=0.20),
+            Block8(scale=0.20),
+            Block8(scale=0.20),
+        )
+        self.block8 = Block8(noReLU=True)
+        self.avgpool_1a = nn.AdaptiveAvgPool2d(1)
+        self.dropout = nn.Dropout(dropout_prob)
+        self.last_linear = nn.Linear(1792, 512, bias=False)
+        self.last_bn = nn.BatchNorm1d(512, eps=0.001, momentum=0.1, affine=True)
 
-                # 10 x Inception-Resnet-B
-                net = slim.repeat(net, 10, block17, scale=0.10)
-                end_points["Mixed_6b"] = net
+        if pretrained is not None:
+            self.logits = nn.Linear(512, tmp_classes)
+            load_weights(self, pretrained)
 
-                # Reduction-B
-                with tf.variable_scope("Mixed_7a"):
-                    net = reduction_b(net)
-                end_points["Mixed_7a"] = net
+        if self.classify and self.num_classes is not None:
+            self.logits = nn.Linear(512, self.num_classes)
 
-                # 5 x Inception-Resnet-C
-                net = slim.repeat(net, 5, block8, scale=0.20)
-                end_points["Mixed_8a"] = net
+        self.device = torch.device('cpu')
+        if device is not None:
+            self.device = device
+            self.to(device)
 
-                net = block8(net, activation_fn=None)
-                end_points["Mixed_8b"] = net
+    def forward(self, x):
+        """Calculate embeddings or logits given a batch of input image tensors.
+        Arguments:
+            x {torch.tensor} -- Batch of image tensors representing faces.
+        Returns:
+            torch.tensor -- Batch of embedding vectors or multinomial logits.
+        """
+        x = self.conv2d_1a(x)
+        x = self.conv2d_2a(x)
+        x = self.conv2d_2b(x)
+        x = self.maxpool_3a(x)
+        x = self.conv2d_3b(x)
+        x = self.conv2d_4a(x)
+        x = self.conv2d_4b(x)
+        x = self.repeat_1(x)
+        x = self.mixed_6a(x)
+        x = self.repeat_2(x)
+        x = self.mixed_7a(x)
+        x = self.repeat_3(x)
+        x = self.block8(x)
+        x = self.avgpool_1a(x)
+        x = self.dropout(x)
+        x = self.last_linear(x.view(x.shape[0], -1))
+        x = self.last_bn(x)
+        if self.classify:
+            x = self.logits(x)
+        else:
+            x = F.normalize(x, p=2, dim=1)
+        return x
 
-                with tf.variable_scope("Logits"):
-                    end_points["PrePool"] = net
-                    # pylint: disable=no-member
-                    net = slim.avg_pool2d(
-                        net,
-                        net.get_shape()[1:3],
-                        padding="VALID",
-                        scope="AvgPool_1a_8x8",
-                    )
-                    net = slim.flatten(net)
 
-                    net = slim.dropout(
-                        net, dropout_keep_prob, is_training=is_training, scope="Dropout"
-                    )
+def load_weights(mdl, name):
+    """Download pretrained state_dict and load into model.
+    Arguments:
+        mdl {torch.nn.Module} -- Pytorch model.
+        name {str} -- Name of dataset that was used to generate pretrained state_dict.
+    Raises:
+        ValueError: If 'pretrained' not equal to 'vggface2' or 'casia-webface'.
+    """
+    if name == 'vggface2':
+        path = 'https://github.com/timesler/facenet-pytorch/releases/download/v2.2.9/20180402-114759-vggface2.pt'
+    elif name == 'casia-webface':
+        path = 'https://github.com/timesler/facenet-pytorch/releases/download/v2.2.9/20180408-102900-casia-webface.pt'
+    else:
+        raise ValueError('Pretrained models only exist for "vggface2" and "casia-webface"')
 
-                    end_points["PreLogitsFlatten"] = net
+    model_dir = os.path.join(get_torch_home(), 'checkpoints')
+    os.makedirs(model_dir, exist_ok=True)
 
-                net = slim.fully_connected(
-                    net,
-                    bottleneck_layer_size,
-                    activation_fn=None,
-                    scope="Bottleneck",
-                    reuse=False,
-                )
+    cached_file = os.path.join(model_dir, os.path.basename(path))
+    if not os.path.exists(cached_file):
+        download_url_to_file(path, cached_file)
 
-    return net, end_points
+    state_dict = torch.load(cached_file)
+    mdl.load_state_dict(state_dict)
+
+
+def get_torch_home():
+    torch_home = os.path.expanduser(
+        os.getenv(
+            'TORCH_HOME',
+            os.path.join(os.getenv('XDG_CACHE_HOME', '~/.cache'), 'torch')
+        )
+    )
+    return torch_home
