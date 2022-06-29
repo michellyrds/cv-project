@@ -6,7 +6,6 @@ from app.run_on_video import __run_on_video__
 from app.utils import sidebar_html
 import model.detection as detection
 
-
 def main():
     """
     Face Detection App with Streamlit
@@ -40,10 +39,13 @@ def main():
         __run_on_image__()
 
 def runDetection():
-    detection.generateCroppedImagesFromVideo('./media/input/Ll-2.mp4')
+    detection.generate_paths()
+    #detection.generateCroppedImagesFromVideo('./media/input/video.mp4')
+    #detection.separateSamples()
+    [dataloaders, dataset_sizes, class_names] = detection.augmentData()
+    detection.beginTraining(dataloaders, dataset_sizes, class_names)
 
 if __name__ == "__main__":
     #main()
     print("Running Detection")
     runDetection()
-    print("AAA Detection")

@@ -3,8 +3,8 @@
 
 .PHONY: environment
 environment: ## setup project environment
-	pyenv install -s 3.10.5
-	pyenv virtualenv 3.10.5 cv-project
+	pyenv install -s 3.7.13
+	pyenv virtualenv 3.7.13 cv-project
 	pyenv local cv-project
 
 .PHONY: requirements
