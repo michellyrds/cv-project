@@ -1,13 +1,13 @@
+import json
 import tempfile
 import time
-import json
 
 import cv2
 import mediapipe.python.solutions.drawing_utils as drawing_utils
 import mediapipe.python.solutions.face_mesh as face_mesh
 import streamlit as st
-from app.save_on_cloud import saveVideo
 
+from app.save_on_cloud import saveVideo
 from app.utils import header_html, image_resize, sidebar_html
 from database.main import get_database
 
@@ -73,7 +73,7 @@ def __run_on_video__():
     fps_input = int(video.get(cv2.CAP_PROP_FPS))
 
     # Recording
-    codec = cv2.VideoWriter_fourcc(*'vp80')
+    codec = cv2.VideoWriter_fourcc(*"vp80")
     out = cv2.VideoWriter(
         output_filepath + output_filename, codec, fps_input, (width, height)
     )
@@ -168,11 +168,13 @@ def __run_on_video__():
         try:
             videoAtt = saveVideo(output_video)
             videoAtt = json.loads(videoAtt)
-            link = '[Vídeo online]({})'.format(videoAtt['path'])
+            link = "[Vídeo online]({})".format(videoAtt["path"])
             st.markdown(link, unsafe_allow_html=True)
 
             mongoConnect = get_database("Videos")
-            mongoConnect.get_collection("OriginalVideos").insert_one({'_id': videoAtt['id'], 'path': videoAtt['path']})
+            mongoConnect.get_collection("OriginalVideos").insert_one(
+                {"_id": videoAtt["id"], "path": videoAtt["path"]}
+            )
         except Exception as e:
             print(e)
 

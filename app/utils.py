@@ -1,7 +1,7 @@
-
-import streamlit as st
 import cv2
+import streamlit as st
 from PIL import Image
+
 
 @st.cache()
 def image_resize(
@@ -25,8 +25,7 @@ def image_resize(
     return resized_image
 
 
-sidebar_html = (
-    """
+sidebar_html = """
         <style>
         [data-testid="stSidebar"][aria-expanded="true"] > div:first-child{
             width: 350px
@@ -37,9 +36,9 @@ sidebar_html = (
         }
         </style>
     """
-)
 
 header_html = "<h1 style='text-align: center; color:rgb(255, 75, 75);'>{}</h1>"
+
 
 def local_css(file_name):
     with open(file_name) as f:

@@ -1,11 +1,12 @@
+import json
+
 import mediapipe.python.solutions.drawing_utils as drawing_utils
 import mediapipe.python.solutions.face_mesh as face_mesh
 import numpy as np
 import streamlit as st
-import json
 from PIL import Image
-from app.save_on_cloud import saveImage
 
+from app.save_on_cloud import saveImage
 from app.utils import header_html, sidebar_html
 from database.main import get_database
 
@@ -79,22 +80,22 @@ def __run_on_image__():
                     header_html.format(face_count),
                     unsafe_allow_html=True,
                 )
-            
+
             st.subheader("Output image")
 
             if save_image:
                 im = Image.fromarray(out_image)
-                im.save(output_filepath + '/output1.jpeg')
+                im.save(output_filepath + "/output1.jpeg")
                 try:
 
-                    outpImg = open(output_filepath + '/output1.jpeg', 'rb')
+                    outpImg = open(output_filepath + "/output1.jpeg", "rb")
                     imgAtt = saveImage(outpImg)
                     mongoConnect = get_database("Images")
-                    col = mongoConnect.get_collection('Images')
+                    col = mongoConnect.get_collection("Images")
                     imgAtt = json.loads(imgAtt)
 
-                    col.insert_one({'_id': imgAtt['id'], 'path': imgAtt['path']})
-                    link = '[Imagem online]({})'.format(imgAtt['path'])
+                    col.insert_one({"_id": imgAtt["id"], "path": imgAtt["path"]})
+                    link = "[Imagem online]({})".format(imgAtt["path"])
                     st.markdown(link, unsafe_allow_html=True)
 
                 except Exception as e:
@@ -104,5 +105,3 @@ def __run_on_image__():
 
         except TypeError:
             pass
-    
-    
