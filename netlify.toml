@@ -1,2 +1,1 @@
 [context.production]
-    command = "streamlit run main.py"
