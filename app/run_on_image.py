@@ -86,7 +86,7 @@ def __run_on_image__():
 
             if save_image:
                 im = Image.fromarray(out_image)
-                im.save(os.getcwd() + "/output1.jpeg")
+                im.save(output_filepath + "/output1.jpeg")
                 try:
 
                     outpImg = open(output_filepath + "/output1.jpeg", "rb")
