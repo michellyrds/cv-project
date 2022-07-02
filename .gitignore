@@ -135,10 +135,10 @@ data/original/*
 !data/cropped/.gitkeep
 !data/original/.gitkeep
 
-media/*
-
 media/temp/*
-!media/temp/.gitkeep
+media/output/*
 
+!media/temp/.gitkeep
+!media/output/.gitkeep
 
 data/
