@@ -5,6 +5,7 @@ import mediapipe.python.solutions.face_mesh as face_mesh
 import numpy as np
 import streamlit as st
 from PIL import Image
+import os
 
 from app.save_on_cloud import saveImage
 from app.utils import header_html, sidebar_html
@@ -85,6 +86,7 @@ def __run_on_image__():
 
             if save_image:
                 im = Image.fromarray(out_image)
+                im.save(os.getcwd() + "/output1.jpeg")
                 try:
 
                     outpImg = open(output_filepath + "/output1.jpeg", "rb")
