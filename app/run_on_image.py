@@ -91,13 +91,13 @@ def __run_on_image__():
 
                     outpImg = open(output_filepath + "/output1.jpeg", "rb")
                     imgAtt = saveImage(outpImg)
-                    mongoConnect = get_database("Images")
-                    col = mongoConnect.get_collection("Images")
                     imgAtt = json.loads(imgAtt)
-
-                    col.insert_one({"_id": imgAtt["id"], "path": imgAtt["path"]})
                     link = "[Imagem online]({})".format(imgAtt["path"])
                     st.markdown(link, unsafe_allow_html=True)
+                    mongoConnect = get_database("Images")
+                    col = mongoConnect.get_collection("Images")
+
+                    col.insert_one({"_id": imgAtt["id"], "path": imgAtt["path"]})
 
                 except Exception as e:
                     print(e)
