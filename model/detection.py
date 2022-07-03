@@ -57,7 +57,7 @@ def generateCroppedImagesFromVideo(
         directory = os.fsencode(personOriginalFolderPath)
         for file in os.listdir(directory):
             filename = os.fsdecode(file)
-            os.system(f"magick mogrify -rotate {rotation} {personOriginalFolderPath}/{filename}")
+            os.system(f"mogrify -rotate {rotation} {personOriginalFolderPath}/{filename}")
         print("Images Rotated!")
 
         rc = subprocess.call("model/mtcnnCaller.sh")
