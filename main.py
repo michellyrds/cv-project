@@ -16,17 +16,17 @@ def main():
         unsafe_allow_html=True,
     )
 
-    st.sidebar.title("Opções")
-    st.sidebar.subheader("Parâmetros")
+    st.sidebar.title("Opcoes")
+    st.sidebar.subheader("Parametros")
 
     about_app, run_on_image, run_on_video = (
         "Sobre o app",
         "Rodar em imagem",
-        "Rodar em vídeo",
+        "Rodar em video",
     )
 
     app_mode = st.sidebar.selectbox(
-        "Selecione uma opção", [about_app, run_on_image, run_on_video]
+        "Selecione uma opcao", [about_app, run_on_image, run_on_video]
     )
 
     if app_mode == about_app:
