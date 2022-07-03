@@ -41,8 +41,13 @@ def main():
 
 def runDetection():
     detection.generate_paths()
-    #detection.generateCroppedImagesFromVideo('./media/input/video.mp4')
-    #detection.separateSamples()
+    for vid in ['Leo','Mat','Michelly','video_vitor']:
+        if 'video_vitor':
+            rotate = "-180"
+        else:
+            rotate = "0"
+        detection.generateCroppedImagesFromVideo('./media/input/' + vid + '.mp4', personName=vid, rotation=rotate)
+    detection.separateSamples()
     [dataloaders, dataset_sizes, class_names] = detection.augmentData()
     detection.beginTraining(dataloaders, dataset_sizes, class_names)
 
