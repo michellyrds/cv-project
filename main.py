@@ -6,7 +6,6 @@ from app.run_on_image import __run_on_image__
 from app.run_on_video import __run_on_video__
 from app.utils import sidebar_html
 
-
 def main():
     """
     Face Detection App with Streamlit
@@ -17,17 +16,17 @@ def main():
         unsafe_allow_html=True,
     )
 
-    st.sidebar.title("Opções")
-    st.sidebar.subheader("Parâmetros")
+    st.sidebar.title("Opcoes")
+    st.sidebar.subheader("Parametros")
 
     about_app, run_on_image, run_on_video = (
         "Sobre o app",
         "Rodar em imagem",
-        "Rodar em vídeo",
+        "Rodar em video",
     )
 
     app_mode = st.sidebar.selectbox(
-        "Selecione uma opção", [about_app, run_on_image, run_on_video]
+        "Selecione uma opcao", [about_app, run_on_image, run_on_video]
     )
 
     if app_mode == about_app:
@@ -41,8 +40,13 @@ def main():
 
 
 def runDetection():
-    detection.generateCroppedImagesFromVideo("./media/input/Ll-2.mp4")
-
+    detection.generate_paths()
+    #detection.generateCroppedImagesFromVideo('./media/input/video.mp4')
+    #detection.separateSamples()
+    [dataloaders, dataset_sizes, class_names] = detection.augmentData()
+    detection.beginTraining(dataloaders, dataset_sizes, class_names)
 
 if __name__ == "__main__":
-    main()
+    #main()
+    print("Running Detection")
+    runDetection()
