@@ -11,7 +11,7 @@ from torch import cuda, device, nn, optim, set_grad_enabled, max as tmax, sum as
 import matplotlib.pyplot as plt
 
 import torch.nn.functional as F
-
+import pickle
 from torch.optim import lr_scheduler
 import time
 import copy
@@ -79,7 +79,6 @@ def test_video_orientation(videoFilePath, personName="John_Doe", testPath="./tes
             image,
         )
 
-
 def separateSamples(samplePercent = 0.25):
     for personFolder in os.listdir(croppedFolderPath):
         if os.path.isfile(f"{croppedFolderPath}{personFolder}") or personFolder == "val" or personFolder == "train":
@@ -114,7 +113,6 @@ def separateSamples(samplePercent = 0.25):
                 )
         shutil.rmtree(f"{croppedFolderPath}{personFolder}")
 
-
 def augmentData():
     data_transforms = {
         'train': transforms.Compose([
@@ -139,8 +137,24 @@ def augmentData():
 
     return dataloaders, dataset_sizes, class_names
 
+def loadModel(modelFilePath = "./model/trainedModel.pth"): 
+    if(os.path.isfile(modelFilePath)):
+        print("Arquivo de modelo encontrado. Pulando o treinamento.")
+        file = open(modelFilePath, 'rb')
+
+        data = pickle.load(file)
+
+        file.close()
+        return data
+    else:
+        print("Arquivo de modelo não encontrado. Parando...")
+        return None
+
+def getPytorchDevice():
+    return device('cuda' if cuda.is_available() else 'cpu')
+
 def beginTraining(dataloaders, dataset_sizes, class_names):
-    current_device = device('cuda' if cuda.is_available() else 'cpu')
+    current_device = getPytorchDevice()
     print('Running on device: {}'.format(current_device))
     
     model_ft, layer_list = createModel(class_names)
@@ -228,6 +242,13 @@ def train_model(model, criterion, optimizer, scheduler, dataloaders, dataset_siz
     print('Best val Acc: {:4f}'.format(best_acc))
     # load best model weights
     model.load_state_dict(best_model_wts)
+    #path = "./model/trainedModel.pth"
+    path = "./model/trainedModel2.md"
+    file = open(path, 'wb')
+    pickle.dump(model, file)
+    file.close()
+    #save(model.state_dict(), path)
+
     return model, FT_losses
 
 def eval_model(losses):

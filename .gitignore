@@ -140,6 +140,5 @@ media/*
 
 media/temp/*
 !media/temp/.gitkeep
-
-
+!media/input/
 data/
