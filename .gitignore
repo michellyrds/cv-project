@@ -134,6 +134,7 @@ data/cropped/*
 data/original/*
 !data/cropped/.gitkeep
 !data/original/.gitkeep
+test/*
 
 media/*
 
