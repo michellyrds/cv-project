@@ -134,11 +134,11 @@ data/cropped/*
 data/original/*
 !data/cropped/.gitkeep
 !data/original/.gitkeep
+test/*
 
 media/*
 
 media/temp/*
 !media/temp/.gitkeep
-
-
+!media/input/
 data/
