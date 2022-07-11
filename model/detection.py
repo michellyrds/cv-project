@@ -54,17 +54,17 @@ def generateCroppedImagesFromVideo(
             count += 1
         print("Images Generated!")
 
-        directory = os.fsencode(personOriginalFolderPath)
-        for file in os.listdir(directory):
-            filename = os.fsdecode(file)
-            os.system(f"mogrify -rotate {rotation} {personOriginalFolderPath}/{filename}")
-        print("Images Rotated!")
+        # directory = os.fsencode(personOriginalFolderPath)
+        # for file in os.listdir(directory):
+        #     filename = os.fsdecode(file)
+        #     os.system(f"mogrify -rotate {rotation} {personOriginalFolderPath}/{filename}")
+        # print("Images Rotated!")
 
-        rc = subprocess.call("model/mtcnnCaller.sh")
+        # rc = subprocess.call("model/mtcnnCaller.sh")
 
-        print("Images Cropped!")
+        # print("Images Cropped!")
 
-        print(rc)
+        # print(rc)
 
 def test_video_orientation(videoFilePath, personName="John_Doe", testPath="./test/"):
     if not os.path.exists(testPath):

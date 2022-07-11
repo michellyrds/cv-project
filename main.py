@@ -44,7 +44,7 @@ def main():
 
 def runDetection():
     detection.generate_paths()
-    for vid in ['Leo','Mat','Mich','vitor']:
+    for vid in ['Michelly']:
         if vid == 'vitor':
             rotate = "-180"
         else:
@@ -67,13 +67,4 @@ def testModel(model, device):
 
 if __name__ == "__main__":
     #main()
-    action = "Load"
-
-    if(action == "Load"):
-        model = detection.loadModel("./model/trainedModel.md")
-        if(model):
-            current_device = detection.getPytorchDevice()
-            testModel(model, current_device)
-    else:
-        print("Running Detection")
-        runDetection()
+    detection.generateCroppedImagesFromVideo('./media/input/' + "Michelly" + '.mp4', personName="Michelly", rotation="0")
