@@ -3,20 +3,26 @@ import os
 import shutil
 import sys
 import tempfile
-
-from urllib.request import urlopen, Request
+from urllib.request import Request, urlopen
 
 try:
-    from tqdm.auto import tqdm  # automatically select proper tqdm submodule if available
+    from tqdm.auto import (
+        tqdm,
+    )  # automatically select proper tqdm submodule if available
 except ImportError:
     try:
         from tqdm import tqdm
     except ImportError:
         # fake tqdm if it's not installed
         class tqdm(object):  # type: ignore
-
-            def __init__(self, total=None, disable=False,
-                         unit=None, unit_scale=None, unit_divisor=None):
+            def __init__(
+                self,
+                total=None,
+                disable=False,
+                unit=None,
+                unit_scale=None,
+                unit_divisor=None,
+            ):
                 self.total = total
                 self.disable = disable
                 self.n = 0
@@ -30,7 +36,9 @@ except ImportError:
                 if self.total is None:
                     sys.stderr.write("\r{0:.1f} bytes".format(self.n))
                 else:
-                    sys.stderr.write("\r{0:.1f}%".format(100 * self.n / float(self.total)))
+                    sys.stderr.write(
+                        "\r{0:.1f}%".format(100 * self.n / float(self.total))
+                    )
                 sys.stderr.flush()
 
             def __enter__(self):
@@ -40,7 +48,7 @@ except ImportError:
                 if self.disable:
                     return
 
-                sys.stderr.write('\n')
+                sys.stderr.write("\n")
 
 
 def download_url_to_file(url, dst, hash_prefix=None, progress=True):
@@ -61,7 +69,7 @@ def download_url_to_file(url, dst, hash_prefix=None, progress=True):
     req = Request(url, headers={"User-Agent": "torch.hub"})
     u = urlopen(req)
     meta = u.info()
-    if hasattr(meta, 'getheaders'):
+    if hasattr(meta, "getheaders"):
         content_length = meta.getheaders("Content-Length")
     else:
         content_length = meta.get_all("Content-Length")
@@ -78,8 +86,13 @@ def download_url_to_file(url, dst, hash_prefix=None, progress=True):
     try:
         if hash_prefix is not None:
             sha256 = hashlib.sha256()
-        with tqdm(total=file_size, disable=not progress,
-                  unit='B', unit_scale=True, unit_divisor=1024) as pbar:
+        with tqdm(
+            total=file_size,
+            disable=not progress,
+            unit="B",
+            unit_scale=True,
+            unit_divisor=1024,
+        ) as pbar:
             while True:
                 buffer = u.read(8192)
                 if len(buffer) == 0:
@@ -92,9 +105,12 @@ def download_url_to_file(url, dst, hash_prefix=None, progress=True):
         f.close()
         if hash_prefix is not None:
             digest = sha256.hexdigest()
-            if digest[:len(hash_prefix)] != hash_prefix:
-                raise RuntimeError('invalid hash value (expected "{}", got "{}")'
-                                   .format(hash_prefix, digest))
+            if digest[: len(hash_prefix)] != hash_prefix:
+                raise RuntimeError(
+                    'invalid hash value (expected "{}", got "{}")'.format(
+                        hash_prefix, digest
+                    )
+                )
         shutil.move(f.name, dst)
     finally:
         f.close()

@@ -23,17 +23,15 @@ https://github.com/kpzhang93/MTCNN_face_detection_alignment
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from six import string_types, iteritems
+from __future__ import absolute_import, division, print_function
 
-import numpy as np
-import tensorflow as tf
+import os
 
 # from math import floor
 import cv2
-import os
+import numpy as np
+import tensorflow as tf
+from six import iteritems, string_types
 
 
 def layer(op):
@@ -830,7 +828,7 @@ def nms(boxes, threshold, method):
         w = np.maximum(0.0, xx2 - xx1 + 1)
         h = np.maximum(0.0, yy2 - yy1 + 1)
         inter = w * h
-        if method is "Min":
+        if method == "Min":
             o = inter / np.minimum(area[i], area[idx])
         else:
             o = inter / (area[i] + area[idx] - inter)
@@ -891,19 +889,20 @@ def imresample(img, sz):
     im_data = cv2.resize(
         img, (sz[1], sz[0]), interpolation=cv2.INTER_AREA
     )  # @UndefinedVariable
-    return im_data
 
     # This method is kept for debugging purpose
 
+    h = img.shape[0]
+    w = img.shape[1]
+    hs, ws = sz
+    dx = float(w) / ws
+    dy = float(h) / hs
+    im_data = np.zeros((hs, ws, 3))
+    for a1 in range(0, hs):
+        for a2 in range(0, ws):
+            for a3 in range(0, 3):
+                im_data[a1, a2, a3] = img[
+                    int(np.floor(a1 * dy)), int(np.floor(a2 * dx)), a3
+                ]
 
-#     h=img.shape[0]
-#     w=img.shape[1]
-#     hs, ws = sz
-#     dx = float(w) / ws
-#     dy = float(h) / hs
-#     im_data = np.zeros((hs,ws,3))
-#     for a1 in range(0,hs):
-#         for a2 in range(0,ws):
-#             for a3 in range(0,3):
-#                 im_data[a1,a2,a3] = img[int(floor(a1*dy)),int(floor(a2*dx)),a3]
-#     return im_data
+    return im_data
