@@ -142,3 +142,5 @@ media/temp/*
 !media/temp/.gitkeep
 !media/input/
 data/
+
+media/input

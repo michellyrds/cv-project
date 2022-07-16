@@ -28,10 +28,8 @@ personFolderPath = ""
 
 
 def generate_paths(imagesPath="./data/"):
-    global originalFolderPath
-    global croppedFolderPath
-    originalFolderPath = imagesPath + originalFolder
-    croppedFolderPath = imagesPath + croppedFolder
+    global croppedFolderPath 
+    croppedFolderPath = imagesPath
 
 
 def generateCroppedImagesFromVideo(
@@ -182,7 +180,7 @@ def beginTraining(dataloaders, dataset_sizes, class_names):
     model_ft, criterion, optimizer, scheduler = addFinalLayers(
         class_names, model_ft, current_device, layer_list
     )
-    model, losses = train_model(
+    model, losses, losses_val = train_model(
         model_ft,
         criterion,
         optimizer,
@@ -191,7 +189,7 @@ def beginTraining(dataloaders, dataset_sizes, class_names):
         dataset_sizes,
         current_device,
     )
-    eval_model(losses)
+    eval_model(losses, losses_val)
 
 
 def createModel(class_names):
@@ -234,10 +232,12 @@ def train_model(
     dataloaders,
     dataset_sizes,
     device,
-    num_epochs=25,
+    num_epochs=5,
 ):
     since = time.time()
     FT_losses = []
+    FT_losses_val = []
+
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
     for epoch in range(num_epochs):
@@ -269,7 +269,10 @@ def train_model(
                         optimizer.step()
                         scheduler.step()
 
-                FT_losses.append(loss.item())
+                if phase == "train":
+                    FT_losses.append(loss.item())
+                if phase == "val":
+                    FT_losses_val.append(loss.item())
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += tsum(preds == labels.data)
@@ -290,23 +293,32 @@ def train_model(
     # load best model weights
     model.load_state_dict(best_model_wts)
     # path = "./model/trainedModel.pth"
-    path = "./model/trainedModel2.md"
+    path = "./model/trainedModel1_1.z"
     file = open(path, "wb")
     pickle.dump(model, file)
     file.close()
     # save(model.state_dict(), path)
 
-    return model, FT_losses
+    return model, FT_losses, FT_losses_val
 
 
-def eval_model(losses):
+def eval_model(train_losses, val_losses):
     plt.figure(figsize=(10, 5))
     plt.title("FRT Loss During Training")
-    plt.plot(losses, label="FT loss")
+    plt.plot(train_losses, label="FT loss")
     plt.xlabel("iterations")
     plt.ylabel("Loss")
     plt.legend()
     plt.show()
+
+    plt.figure(figsize=(10, 5))
+    plt.title("FRT Loss During Validation")
+    plt.plot(val_losses, label="FT loss")
+    plt.xlabel("iterations")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.show()
+
 
 
 class Flatten(nn.Module):
