@@ -4,6 +4,7 @@ import pickle
 import shutil
 import subprocess
 import time
+from turtle import color
 
 import cv2 as cv
 import matplotlib.pyplot as plt
@@ -313,7 +314,7 @@ def eval_model(train_losses, val_losses):
 
     plt.figure(figsize=(10, 5))
     plt.title("FRT Loss During Validation")
-    plt.plot(val_losses, label="FT loss")
+    plt.plot(val_losses, label="FT loss", color="orange")
     plt.xlabel("iterations")
     plt.ylabel("Loss")
     plt.legend()
