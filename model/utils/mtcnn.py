@@ -21,20 +21,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
-from scipy import misc
-import sys
-import os
 import argparse
-import tensorflow as tf
-import numpy as np
-import facenet.src.facenet as facenet
-import detect_face
+import os
 import random
+import sys
 from time import sleep
+
+import detect_face
+import facenet.src.facenet as facenet
+import numpy as np
+import tensorflow as tf
+from scipy import misc
 
 
 def main(args):
