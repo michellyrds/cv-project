@@ -6,6 +6,7 @@ from app.run_on_image import __run_on_image__
 from app.run_on_video import __run_on_video__
 from app.utils import sidebar_html
 
+
 def main():
     """
     Face Detection App with Streamlit
@@ -37,20 +38,6 @@ def main():
 
     elif app_mode == run_on_image:
         __run_on_image__()
-
-
-def runDetection():
-    detection.generate_paths()
-    for vid in ['Leo','Mat','Mich','vitor']:
-        if vid == 'vitor':
-            rotate = "-180"
-        else:
-            rotate = "0"
-        detection.generateCroppedImagesFromVideo('./media/input/' + vid + '.mp4', personName=vid, rotation=rotate)
-    detection.separateSamples()
-    [dataloaders, dataset_sizes, class_names] = detection.augmentData()
-    detection.beginTraining(dataloaders, dataset_sizes, class_names)
-
 
 
 if __name__ == "__main__":
