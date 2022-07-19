@@ -172,7 +172,7 @@ def getPytorchDevice():
     return device("cuda" if cuda.is_available() else "cpu")
 
 
-def beginTraining(dataloaders, dataset_sizes, class_names):
+def beginTraining(model_name,dataloaders, dataset_sizes, class_names):
     current_device = getPytorchDevice()
     print("Running on device: {}".format(current_device))
 
@@ -182,6 +182,7 @@ def beginTraining(dataloaders, dataset_sizes, class_names):
         class_names, model_ft, current_device, layer_list
     )
     model, losses, losses_val = train_model(
+        model_name,
         model_ft,
         criterion,
         optimizer,
@@ -226,6 +227,7 @@ def addFinalLayers(class_names, model_ft, device, layer_list):
 
 
 def train_model(
+    model_name,
     model,
     criterion,
     optimizer,
@@ -233,7 +235,7 @@ def train_model(
     dataloaders,
     dataset_sizes,
     device,
-    num_epochs=5,
+    num_epochs=25,
 ):
     since = time.time()
     FT_losses = []
@@ -294,7 +296,7 @@ def train_model(
     # load best model weights
     model.load_state_dict(best_model_wts)
     # path = "./model/trainedModel.pth"
-    path = "./model/trainedModel1_1.z"
+    path = "./model/{}.z".format(model_name)
     file = open(path, "wb")
     pickle.dump(model, file)
     file.close()

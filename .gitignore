@@ -144,3 +144,5 @@ media/temp/*
 data/
 
 media/input
+
+model/*.z
